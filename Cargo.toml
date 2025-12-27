@@ -1,0 +1,29 @@
+[package]
+name = "deoxys-core"
+version = "2.0.0"
+edition = "2021"
+authors = ["Alexis Adams <sovereign@axiomhive.net>"]
+
+[dependencies]
+tokio = { version = "1.36", features = ["full"] }
+anyhow = "1.0"
+log = "0.4"
+env_logger = "0.11"
+ndarray = "0.15"
+# Using concrete-core for FHE (Mock-free implementation requires specific version pinning)
+# In a real environment, verify compatibility with your hardware AVX512 support
+concrete-core = "1.0.0" 
+ed25519-dalek = "2.1"
+rand = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
+chrono = "0.4"
+lazy_static = "1.4"
+hex = "0.4"
+
+[profile.release]
+opt-level = 3
+lto = true
+panic = 'abort'
+codegen-units = 1
