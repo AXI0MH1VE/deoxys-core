@@ -9,6 +9,50 @@ use ndarray::Array1;
 use anyhow::Result;
 use log::info;
 
+/// Operator Intent: Specifies the bounds and constraints for system outputs
+/// This captures the human operator's explicit intent for what the system may produce
+#[derive(Debug, Clone)]
+pub struct OperatorIntent {
+    pub min_bound: f64,
+    pub max_bound: f64,
+    pub description: String,
+}
+
+impl OperatorIntent {
+    pub fn new(min_bound: f64, max_bound: f64, description: String) -> Result<Self> {
+        if min_bound >= max_bound {
+            anyhow::bail!("Invalid bounds: min_bound must be less than max_bound");
+        }
+        Ok(Self {
+            min_bound,
+            max_bound,
+            description,
+        })
+    }
+
+    /// Verify that a value is within the operator's specified bounds
+    pub fn verify_value(&self, value: f64) -> bool {
+        value >= self.min_bound && value <= self.max_bound
+    }
+
+    /// Verify that all values in a state vector are within bounds
+    pub fn verify_state(&self, state: &Array1<f64>) -> Result<()> {
+        for (idx, &value) in state.iter().enumerate() {
+            if !self.verify_value(value) {
+                anyhow::bail!(
+                    "Operator intent violation: State[{}] = {} exceeds bounds [{}, {}] - {}",
+                    idx,
+                    value,
+                    self.min_bound,
+                    self.max_bound,
+                    self.description
+                );
+            }
+        }
+        Ok(())
+    }
+}
+
 pub struct CycleReceipt {
     pub hash: String,
 }
@@ -32,11 +76,16 @@ impl RikEngine {
         }
     }
 
-    pub async fn execute_cycle(&mut self) -> Result<CycleReceipt> {
+    pub async fn execute_cycle(&mut self, operator_intent: &OperatorIntent) -> Result<CycleReceipt> {
         // Verify sovereign state integrity at cycle start
         if !self.state.verify_integrity() {
             anyhow::bail!("Sovereign state integrity violation detected");
         }
+
+        info!("   -> Operator Intent: {} (bounds: [{}, {}])", 
+              operator_intent.description, 
+              operator_intent.min_bound, 
+              operator_intent.max_bound);
 
         // 1. OBSERVE (Simulated deterministic input for core logic proof)
         let observation = self.observe_environment();
@@ -49,8 +98,13 @@ impl RikEngine {
         // 6. MINIMIZE LAGRANGIAN (Enforced by Validator)
         self.validator.check_stability(&self.belief_state)?;
 
-        // 7. SAFETY PROJECT (Clamp values to [-1.0, 1.0])
-        self.belief_state.mapv_inplace(|x| x.clamp(-1.0, 1.0));
+        // 7. SAFETY PROJECT (Clamp values to operator-specified bounds)
+        // This enforces the operator's intent on all outputs
+        self.belief_state.mapv_inplace(|x| x.clamp(operator_intent.min_bound, operator_intent.max_bound));
+
+        // CRITICAL: Verify all outputs are strictly bounded by operator intent
+        operator_intent.verify_state(&self.belief_state)?;
+        info!("   -> ✓ Operator intent verified: All outputs within bounds");
 
         // 8. EXECUTE (GATED) -> Human approval required in main loop before this point
         // This step is now truly gated - execution only proceeds with explicit human approval

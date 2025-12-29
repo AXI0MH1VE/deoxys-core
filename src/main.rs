@@ -7,7 +7,7 @@ mod invariants;
 mod crypto;
 mod substrate;
 
-use crate::rik::RikEngine;
+use crate::rik::{RikEngine, OperatorIntent};
 use crate::substrate::SovereignState;
 use log::{info, error, warn};
 use std::time::{Duration, Instant};
@@ -44,7 +44,45 @@ async fn main() -> anyhow::Result<()> {
         
         // HUMAN APPROVAL GATE: Require explicit human approval before execution
         info!("\n=== CYCLE {} APPROVAL REQUEST ===", cycle_count);
-        print!("Approve cycle execution? (y/n): ");
+        
+        // Capture operator's intent for this cycle
+        print!("Specify output bounds - Min value (default: -1.0): ");
+        io::stdout().flush().unwrap();
+        let mut min_input = String::new();
+        io::stdin().read_line(&mut min_input).unwrap();
+        let min_bound: f64 = min_input.trim().parse().unwrap_or(-1.0);
+        
+        print!("Specify output bounds - Max value (default: 1.0): ");
+        io::stdout().flush().unwrap();
+        let mut max_input = String::new();
+        io::stdin().read_line(&mut max_input).unwrap();
+        let max_bound: f64 = max_input.trim().parse().unwrap_or(1.0);
+        
+        print!("Intent description (default: 'Standard bounds'): ");
+        io::stdout().flush().unwrap();
+        let mut desc_input = String::new();
+        io::stdin().read_line(&mut desc_input).unwrap();
+        let description = if desc_input.trim().is_empty() {
+            "Standard bounds".to_string()
+        } else {
+            desc_input.trim().to_string()
+        };
+        
+        let operator_intent = match OperatorIntent::new(min_bound, max_bound, description) {
+            Ok(intent) => intent,
+            Err(e) => {
+                error!("!! INVALID BOUNDS: {}", e);
+                warn!("!! CYCLE {} REJECTED: Invalid operator intent specification", cycle_count);
+                continue;
+            }
+        };
+        
+        info!(">> Operator Intent Captured: {} (bounds: [{}, {}])", 
+              operator_intent.description, 
+              operator_intent.min_bound, 
+              operator_intent.max_bound);
+        
+        print!("Approve cycle execution with these bounds? (y/n): ");
         io::stdout().flush().unwrap();
         
         let mut approval = String::new();
@@ -67,7 +105,7 @@ async fn main() -> anyhow::Result<()> {
         info!(">> CYCLE {} APPROVED: Executing with human oversight...", cycle_count);
         let cycle_start = Instant::now();
 
-        match engine.execute_cycle().await {
+        match engine.execute_cycle(&operator_intent).await {
             Ok(receipt) => {
                 info!("<< CYCLE COMPLETE: Hash={} | Latency={:?}", receipt.hash, cycle_start.elapsed());
             }
