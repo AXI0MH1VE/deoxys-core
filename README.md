@@ -78,6 +78,14 @@ When running, you will be prompted to approve each cycle:
 
 Proprietary - Axiom Hive © 2025
 
+All rights reserved. This software is proprietary and confidential.
+See LICENSE file for full terms.
+
+### Third-Party Dependencies
+
+This software uses open-source libraries that are compatible with proprietary use.
+See THIRD_PARTY_NOTICES.md for detailed attribution and license information.
+
 ## Contact
 
 Alexis Adams  
