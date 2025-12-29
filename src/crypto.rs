@@ -1,3 +1,7 @@
+// Copyright (c) 2025 Axiom Hive. All Rights Reserved.
+// Author: Alexis Adams <sovereign@axiomhive.net>
+// SPDX-License-Identifier: Proprietary
+
 use ndarray::Array1;
 use sha2::{Sha256, Digest};
 use ed25519_dalek::{SigningKey, Signer};

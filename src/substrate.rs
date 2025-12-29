@@ -1,3 +1,7 @@
+// Copyright (c) 2025 Axiom Hive. All Rights Reserved.
+// Author: Alexis Adams <sovereign@axiomhive.net>
+// SPDX-License-Identifier: Proprietary
+
 pub struct SovereignState {
     root_signature: String,
 }

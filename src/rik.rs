@@ -1,3 +1,7 @@
+// Copyright (c) 2025 Axiom Hive. All Rights Reserved.
+// Author: Alexis Adams <sovereign@axiomhive.net>
+// SPDX-License-Identifier: Proprietary
+
 use crate::substrate::SovereignState;
 use crate::invariants::LyapunovValidator;
 use crate::crypto::{CkksProvider, ProvenanceSigner};
