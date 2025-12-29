@@ -42,6 +42,17 @@ Each cycle requires explicit human approval before execution:
 - Compliance with responsible AI principles
 - Operator maintains control authority at all times
 
+### Operator Intent Enforcement
+
+**Critical Safety Layer**: Beyond approval, operators specify explicit bounds for all system outputs:
+- Operators define minimum and maximum output values for each cycle
+- All outputs are strictly clamped to operator-specified bounds
+- System verifies every value respects operator intent before execution
+- Violations trigger immediate fail-stop (Zero Entropy Law)
+- Complete audit trail of operator intentions and verifications
+
+This dual-layer control (approval + bounded intent) ensures AI outputs **cannot exceed operator-defined limits**, providing deterministic safety guarantees.
+
 ## Zero Entropy Law
 
 The system enforces deterministic behavior through Lyapunov stability:
@@ -61,10 +72,27 @@ cargo build --release
 cargo run --release
 ```
 
-When running, you will be prompted to approve each cycle:
-- Enter `y` or `yes` to approve execution
+When running, you will be prompted to specify operator intent and approve each cycle:
+
+### Operator Intent Specification
+For each cycle, you must specify:
+1. **Min bound**: Minimum allowed value for system outputs (default: -1.0)
+2. **Max bound**: Maximum allowed value for system outputs (default: 1.0)
+3. **Description**: Human-readable description of the intent (default: "Standard bounds")
+
+### Approval Process
+- Enter `y` or `yes` to approve execution with the specified bounds
 - Enter `n` or `no` to deny execution
 - Enter `exit` after denial to shutdown the system
+
+### Operator Intent Verification
+**Critical Safety Feature**: All system outputs are strictly bounded by the operator's specified intent. The system:
+- Clamps all state values to the operator-specified bounds during safety projection (Step 7)
+- Verifies every output value is within bounds before execution (Step 8)
+- Fails immediately if any output violates the operator's intent
+- Logs verification success for audit trails
+
+This ensures that **no output can exceed the bounds explicitly set by the human operator**, maintaining strict human control over AI behavior.
 
 ## Dependencies
 

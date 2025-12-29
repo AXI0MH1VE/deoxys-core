@@ -50,13 +50,35 @@ async fn main() -> anyhow::Result<()> {
         io::stdout().flush().unwrap();
         let mut min_input = String::new();
         io::stdin().read_line(&mut min_input).unwrap();
-        let min_bound: f64 = min_input.trim().parse().unwrap_or(-1.0);
+        let min_bound: f64 = match min_input.trim().parse::<f64>() {
+            Ok(val) if val.is_finite() => val,
+            Ok(_) => {
+                error!("!! Invalid min bound: must be a finite number (not NaN or infinity), using default: -1.0");
+                -1.0
+            }
+            Err(_) if min_input.trim().is_empty() => -1.0,
+            Err(_) => {
+                warn!("!! Invalid min bound input, using default: -1.0");
+                -1.0
+            }
+        };
         
         print!("Specify output bounds - Max value (default: 1.0): ");
         io::stdout().flush().unwrap();
         let mut max_input = String::new();
         io::stdin().read_line(&mut max_input).unwrap();
-        let max_bound: f64 = max_input.trim().parse().unwrap_or(1.0);
+        let max_bound: f64 = match max_input.trim().parse::<f64>() {
+            Ok(val) if val.is_finite() => val,
+            Ok(_) => {
+                error!("!! Invalid max bound: must be a finite number (not NaN or infinity), using default: 1.0");
+                1.0
+            }
+            Err(_) if max_input.trim().is_empty() => 1.0,
+            Err(_) => {
+                warn!("!! Invalid max bound input, using default: 1.0");
+                1.0
+            }
+        };
         
         print!("Intent description (default: 'Standard bounds'): ");
         io::stdout().flush().unwrap();

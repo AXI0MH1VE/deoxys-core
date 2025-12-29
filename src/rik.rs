@@ -20,6 +20,13 @@ pub struct OperatorIntent {
 
 impl OperatorIntent {
     pub fn new(min_bound: f64, max_bound: f64, description: String) -> Result<Self> {
+        // Validate bounds are finite (not NaN or infinity)
+        if !min_bound.is_finite() {
+            anyhow::bail!("Invalid min_bound: must be a finite number (not NaN or infinity)");
+        }
+        if !max_bound.is_finite() {
+            anyhow::bail!("Invalid max_bound: must be a finite number (not NaN or infinity)");
+        }
         if min_bound >= max_bound {
             anyhow::bail!("Invalid bounds: min_bound must be less than max_bound");
         }
@@ -32,12 +39,21 @@ impl OperatorIntent {
 
     /// Verify that a value is within the operator's specified bounds
     pub fn verify_value(&self, value: f64) -> bool {
-        value >= self.min_bound && value <= self.max_bound
+        // NaN and infinite values are never within bounds
+        value.is_finite() && value >= self.min_bound && value <= self.max_bound
     }
 
     /// Verify that all values in a state vector are within bounds
     pub fn verify_state(&self, state: &Array1<f64>) -> Result<()> {
         for (idx, &value) in state.iter().enumerate() {
+            if !value.is_finite() {
+                anyhow::bail!(
+                    "Operator intent violation: State[{}] = {} is not finite (NaN or infinity) - {}",
+                    idx,
+                    value,
+                    self.description
+                );
+            }
             if !self.verify_value(value) {
                 anyhow::bail!(
                     "Operator intent violation: State[{}] = {} exceeds bounds [{}, {}] - {}",
@@ -97,6 +113,17 @@ impl RikEngine {
         // 5. ACTUATOR MAP
         // 6. MINIMIZE LAGRANGIAN (Enforced by Validator)
         self.validator.check_stability(&self.belief_state)?;
+
+        // Pre-clamping validation: Ensure no NaN or infinite values before safety projection
+        for (idx, &value) in self.belief_state.iter().enumerate() {
+            if !value.is_finite() {
+                anyhow::bail!(
+                    "Pre-clamping validation failed: State[{}] = {} is not finite (NaN or infinity)",
+                    idx,
+                    value
+                );
+            }
+        }
 
         // 7. SAFETY PROJECT (Clamp values to operator-specified bounds)
         // This enforces the operator's intent on all outputs
