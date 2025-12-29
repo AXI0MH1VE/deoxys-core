@@ -34,3 +34,32 @@ opt-level = 3
 lto = true
 panic = 'abort'
 codegen-units = 1
+
+
+# iOS Native Build Configuration
+[lib]
+name = "deoxys_core"
+crate-type = ["staticlib", "cdylib"]  # staticlib for iOS, cdylib for dynamic linking
+
+# iOS target dependencies
+[target.'cfg(target_os = "ios")')
+dependencies]
+# iOS-specific dependencies if needed
+
+# Build script for FFI generation
+[build-dependencies]
+cbindgen = "0.26"  # Generate C headers for FFI
+
+# iOS cross-compilation profiles
+[profile.release-ios]
+inherits = "release"
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = false  # Keep symbols for debugging
+panic = "abort"
+
+# Development profile for iOS simulator
+[profile.dev-ios]
+inherits = "dev"
+opt-level = 1
