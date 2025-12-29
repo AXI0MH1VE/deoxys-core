@@ -1,0 +1,1 @@
+rd_("kdeoxys_core")
