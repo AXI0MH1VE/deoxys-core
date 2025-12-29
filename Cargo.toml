@@ -3,6 +3,13 @@ name = "deoxys-core"
 version = "2.0.0"
 edition = "2021"
 authors = ["Alexis Adams <sovereign@axiomhive.net>"]
+description = "Deoxys Hegemony Forge V2.0 - Deterministic AI Control System with 20Hz RIK God Loop, Zero Entropy Law, CKKS FHE, and Lyapunov Stability Enforcement"
+license = "Proprietary"
+repository = "https://github.com/AXI0MH1VE/deoxys-core"
+homepage = "https://www.axiomhive.net"
+readme = "README.md"
+keywords = ["ai", "deterministic", "verification", "cryptography", "control-systems"]
+categories = ["algorithms", "cryptography", "science"]
 
 [dependencies]
 tokio = { version = "1.36", features = ["full"] }
