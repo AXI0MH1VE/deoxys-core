@@ -33,6 +33,11 @@ impl RikEngine {
     }
 
     pub async fn execute_cycle(&mut self) -> Result<CycleReceipt> {
+        // Verify sovereign state integrity at cycle start
+        if !self.state.verify_integrity() {
+            anyhow::bail!("Sovereign state integrity violation detected");
+        }
+
         // 1. OBSERVE (Simulated deterministic input for core logic proof)
         let observation = self.observe_environment();
 
