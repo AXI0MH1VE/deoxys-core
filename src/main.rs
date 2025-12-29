@@ -7,7 +7,7 @@ mod invariants;
 mod crypto;
 mod substrate;
 
-use crate::rik::RikEngine;
+use crate::rik::{RikEngine, OperatorBounds};
 use crate::substrate::SovereignState;
 use log::{info, error, warn};
 use std::time::{Duration, Instant};
@@ -36,6 +36,43 @@ async fn main() -> anyhow::Result<()> {
 
     info!(">> SYSTEM ACTIVE: Entering Human-Supervised RIK Loop");
     info!(">> HUMAN-IN-THE-LOOP: Manual approval required for each cycle execution");
+    
+    // OPERATOR BOUNDS CONFIGURATION: Allow operator to specify output bounds
+    info!("\n=== OPERATOR BOUNDS CONFIGURATION ===");
+    info!(">> Specify output bounds for system control (default: [-1.0, 1.0])");
+    print!("Enter minimum bound (or press Enter for default -1.0): ");
+    io::stdout().flush().unwrap();
+    
+    let mut min_input = String::new();
+    io::stdin().read_line(&mut min_input).unwrap();
+    let min_bound: f64 = if min_input.trim().is_empty() {
+        -1.0
+    } else {
+        min_input.trim().parse().unwrap_or(-1.0)
+    };
+    
+    print!("Enter maximum bound (or press Enter for default 1.0): ");
+    io::stdout().flush().unwrap();
+    
+    let mut max_input = String::new();
+    io::stdin().read_line(&mut max_input).unwrap();
+    let max_bound: f64 = if max_input.trim().is_empty() {
+        1.0
+    } else {
+        max_input.trim().parse().unwrap_or(1.0)
+    };
+    
+    match OperatorBounds::new(min_bound, max_bound) {
+        Ok(bounds) => {
+            engine.set_operator_bounds(bounds);
+            info!(">> Operator bounds set: [{}, {}]", bounds.min, bounds.max);
+            info!(">> All subsequent outputs will be strictly bounded by this intent");
+        }
+        Err(e) => {
+            error!("!! Invalid bounds specified: {}", e);
+            info!(">> Using default bounds: [-1.0, 1.0]");
+        }
+    }
 
     // 3. The Human-Supervised Loop
     let mut cycle_count = 0u64;
