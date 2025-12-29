@@ -3,6 +3,7 @@ use crate::invariants::LyapunovValidator;
 use crate::crypto::{CkksProvider, ProvenanceSigner};
 use ndarray::Array1;
 use anyhow::Result;
+use log::info;
 
 pub struct CycleReceipt {
     pub hash: String,
@@ -42,7 +43,11 @@ impl RikEngine {
         // 7. SAFETY PROJECT (Clamp values to [-1.0, 1.0])
         self.belief_state.mapv_inplace(|x| x.clamp(-1.0, 1.0));
 
-        // 8. EXECUTE (GATED) -> 9. MEASURE
+        // 8. EXECUTE (GATED) -> Human approval required in main loop before this point
+        // This step is now truly gated - execution only proceeds with explicit human approval
+        info!("   -> Executing approved actions with human oversight");
+        
+        // 9. MEASURE
         // 10. UPDATE DUALS (Skipped in V2.0 MVP, implicit in clamp)
         
         // 11. A2A/DFL (Encrypted State Exchange)

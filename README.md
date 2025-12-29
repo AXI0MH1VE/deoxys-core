@@ -5,7 +5,7 @@
 
 ## Overview
 
-Deoxys Core is a deterministic AI control system implementing the 20Hz RIK (Recursive Invariant Kernel) God Loop with cryptographic provenance and formal stability guarantees.
+Deoxys Core is a deterministic AI control system implementing the 20Hz RIK (Recursive Invariant Kernel) with cryptographic provenance and formal stability guarantees. **The system enforces human-in-the-loop control**, requiring explicit human approval before each cycle execution to prevent autonomous operation.
 
 ## Architecture
 
@@ -19,6 +19,8 @@ Deoxys Core is a deterministic AI control system implementing the 20Hz RIK (Recu
 
 ### The 12-Step RIK Cycle
 
+Each cycle requires explicit human approval before execution:
+
 1. **OBSERVE** - Environment state acquisition
 2. **BAYES UPDATE** - Belief state refinement
 3. **STATE ESTIMATE** - Optimal state inference
@@ -26,11 +28,19 @@ Deoxys Core is a deterministic AI control system implementing the 20Hz RIK (Recu
 5. **ACTUATOR MAP** - Control signal transformation
 6. **MINIMIZE LAGRANGIAN** - Constrained optimization
 7. **SAFETY PROJECT** - Invariant enforcement
-8. **EXECUTE (GATED)** - Controlled actuation
+8. **EXECUTE (GATED)** - Controlled actuation **with mandatory human approval**
 9. **MEASURE** - Outcome verification
 10. **UPDATE DUALS** - Constraint adaptation
 11. **A2A/DFL** - Encrypted federated learning
 12. **LOG PROVENANCE** - Cryptographic audit trail
+
+## Human-in-the-Loop Control
+
+**No autonomous execution**: The system requires explicit human approval before each cycle. This ensures:
+- Human oversight of all AI operations
+- Prevention of unintended autonomous behavior
+- Compliance with responsible AI principles
+- Operator maintains control authority at all times
 
 ## Zero Entropy Law
 
@@ -46,9 +56,15 @@ The system enforces deterministic behavior through Lyapunov stability:
 # Build release binary
 cargo build --release
 
-# Execute God Loop
+# Execute with human supervision
+# The system will prompt for approval before each cycle execution
 cargo run --release
 ```
+
+When running, you will be prompted to approve each cycle:
+- Enter `y` or `yes` to approve execution
+- Enter `n` or `no` to deny execution
+- Enter `exit` after denial to shutdown the system
 
 ## Dependencies
 
