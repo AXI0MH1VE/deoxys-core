@@ -51,7 +51,7 @@ Each cycle requires explicit human approval before execution:
 - Pre-clamping verification provides audit trail of values before enforcement
 - Complete audit trail of operator intentions and clamping operations
 
-This dual-layer control (approval + bounded intent) constrains AI outputs to the operator-defined limits for each cycle, trading fixed, hardcoded safety bounds for operator flexibility. Overall safety and effective determinism therefore depend on the bounds chosen by the operator; the system enforces maximum bounds of ±10.0 to prevent destabilization.
+This dual-layer control (approval + bounded intent) constrains AI outputs to the operator-defined limits for each cycle. The system enforces maximum bounds of ±10.0 to prevent destabilization while providing operator flexibility within those limits.
 
 ## Zero Entropy Law
 
@@ -90,10 +90,9 @@ If invalid bounds are entered, you will be prompted to re-enter them until valid
 ### Operator Intent Verification
 **Critical Safety Feature**: All system outputs are strictly bounded by the operator's specified intent. The system:
 - Verifies values are finite (not NaN/infinity) before clamping for audit purposes
+- Detects out-of-bounds values before clamping for audit trail
 - Clamps all state values to the operator-specified bounds during safety projection (Step 7)
-- Confirms before execution (Step 8) that, after clamping, every output value lies within the operator-specified bounds
-- Treats this pre-execution check as verification of correct clamping rather than as a separate fail-stop on out-of-bounds values
-- Logs verification results for audit trails
+- Logs completion of clamping operation for audit purposes
 
 This ensures that **no output can exceed the bounds explicitly set by the human operator** (within the maximum ±10.0 system stability limits), maintaining strict human control over AI behavior.
 
