@@ -45,64 +45,67 @@ async fn main() -> anyhow::Result<()> {
         // HUMAN APPROVAL GATE: Require explicit human approval before execution
         info!("\n=== CYCLE {} APPROVAL REQUEST ===", cycle_count);
         
-        // Capture operator's intent for this cycle
-        print!("Specify output bounds - Min value (default: -1.0): ");
-        io::stdout().flush().unwrap();
-        let mut min_input = String::new();
-        io::stdin().read_line(&mut min_input).unwrap();
-        let min_bound: f64 = match min_input.trim().parse::<f64>() {
-            Ok(val) if val.is_finite() => val,
-            Ok(_) => {
-                error!("!! Invalid min bound: must be a finite number (not NaN or infinity), using default: -1.0");
-                -1.0
-            }
-            Err(_) if min_input.trim().is_empty() => -1.0,
-            Err(_) => {
-                warn!("!! Invalid min bound input, using default: -1.0");
-                -1.0
+        // Capture operator's intent for this cycle with validation loop
+        let operator_intent = loop {
+            print!("Specify output bounds - Min value (default: -1.0): ");
+            io::stdout().flush().unwrap();
+            let mut min_input = String::new();
+            io::stdin().read_line(&mut min_input).unwrap();
+            let min_bound: f64 = match min_input.trim().parse::<f64>() {
+                Ok(val) if val.is_finite() => val,
+                Ok(_) => {
+                    error!("!! Invalid min bound: must be a finite number (not NaN or infinity), using default: -1.0");
+                    -1.0
+                }
+                Err(_) if min_input.trim().is_empty() => -1.0,
+                Err(_) => {
+                    warn!("!! Invalid min bound input, using default: -1.0");
+                    -1.0
+                }
+            };
+            
+            print!("Specify output bounds - Max value (default: 1.0): ");
+            io::stdout().flush().unwrap();
+            let mut max_input = String::new();
+            io::stdin().read_line(&mut max_input).unwrap();
+            let max_bound: f64 = match max_input.trim().parse::<f64>() {
+                Ok(val) if val.is_finite() => val,
+                Ok(_) => {
+                    error!("!! Invalid max bound: must be a finite number (not NaN or infinity), using default: 1.0");
+                    1.0
+                }
+                Err(_) if max_input.trim().is_empty() => 1.0,
+                Err(_) => {
+                    warn!("!! Invalid max bound input, using default: 1.0");
+                    1.0
+                }
+            };
+            
+            print!("Intent description (default: 'Standard bounds'): ");
+            io::stdout().flush().unwrap();
+            let mut desc_input = String::new();
+            io::stdin().read_line(&mut desc_input).unwrap();
+            let description = if desc_input.trim().is_empty() {
+                "Standard bounds".to_string()
+            } else {
+                desc_input.trim().to_string()
+            };
+            
+            match OperatorIntent::new(min_bound, max_bound, description) {
+                Ok(intent) => {
+                    info!(">> Operator Intent Captured: {} (bounds: [{}, {}])", 
+                          intent.description, 
+                          intent.min_bound, 
+                          intent.max_bound);
+                    break intent;
+                }
+                Err(e) => {
+                    error!("!! INVALID BOUNDS: {}", e);
+                    warn!("!! Please re-enter the output bounds.\n");
+                    continue;
+                }
             }
         };
-        
-        print!("Specify output bounds - Max value (default: 1.0): ");
-        io::stdout().flush().unwrap();
-        let mut max_input = String::new();
-        io::stdin().read_line(&mut max_input).unwrap();
-        let max_bound: f64 = match max_input.trim().parse::<f64>() {
-            Ok(val) if val.is_finite() => val,
-            Ok(_) => {
-                error!("!! Invalid max bound: must be a finite number (not NaN or infinity), using default: 1.0");
-                1.0
-            }
-            Err(_) if max_input.trim().is_empty() => 1.0,
-            Err(_) => {
-                warn!("!! Invalid max bound input, using default: 1.0");
-                1.0
-            }
-        };
-        
-        print!("Intent description (default: 'Standard bounds'): ");
-        io::stdout().flush().unwrap();
-        let mut desc_input = String::new();
-        io::stdin().read_line(&mut desc_input).unwrap();
-        let description = if desc_input.trim().is_empty() {
-            "Standard bounds".to_string()
-        } else {
-            desc_input.trim().to_string()
-        };
-        
-        let operator_intent = match OperatorIntent::new(min_bound, max_bound, description) {
-            Ok(intent) => intent,
-            Err(e) => {
-                error!("!! INVALID BOUNDS: {}", e);
-                warn!("!! CYCLE {} REJECTED: Invalid operator intent specification", cycle_count);
-                continue;
-            }
-        };
-        
-        info!(">> Operator Intent Captured: {} (bounds: [{}, {}])", 
-              operator_intent.description, 
-              operator_intent.min_bound, 
-              operator_intent.max_bound);
         
         print!("Approve cycle execution with these bounds? (y/n): ");
         io::stdout().flush().unwrap();
