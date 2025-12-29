@@ -46,12 +46,12 @@ Each cycle requires explicit human approval before execution:
 
 **Critical Safety Layer**: Beyond approval, operators specify explicit bounds for all system outputs:
 - Operators define minimum and maximum output values for each cycle
-- All outputs are strictly clamped to operator-specified bounds
-- System verifies every value respects operator intent before execution
-- Violations trigger immediate fail-stop (Zero Entropy Law)
-- Complete audit trail of operator intentions and verifications
+- Bounds must be within [-10.0, 10.0] to maintain system stability
+- All outputs are strictly clamped to operator-specified bounds during safety projection
+- Pre-clamping verification provides audit trail of values before enforcement
+- Complete audit trail of operator intentions and clamping operations
 
-This dual-layer control (approval + bounded intent) ensures AI outputs **cannot exceed operator-defined limits**, providing deterministic safety guarantees.
+This dual-layer control (approval + bounded intent) constrains AI outputs to the operator-defined limits for each cycle, trading fixed, hardcoded safety bounds for operator flexibility. Overall safety and effective determinism therefore depend on the bounds chosen by the operator; the system enforces maximum bounds of ±10.0 to prevent destabilization.
 
 ## Zero Entropy Law
 
@@ -76,9 +76,11 @@ When running, you will be prompted to specify operator intent and approve each c
 
 ### Operator Intent Specification
 For each cycle, you must specify:
-1. **Min bound**: Minimum allowed value for system outputs (default: -1.0)
-2. **Max bound**: Maximum allowed value for system outputs (default: 1.0)
+1. **Min bound**: Minimum allowed value for system outputs (default: -1.0, range: -10.0 to 10.0)
+2. **Max bound**: Maximum allowed value for system outputs (default: 1.0, range: -10.0 to 10.0)
 3. **Description**: Human-readable description of the intent (default: "Standard bounds")
+
+If invalid bounds are entered, you will be prompted to re-enter them until valid bounds are provided.
 
 ### Approval Process
 - Enter `y` or `yes` to approve execution with the specified bounds
@@ -87,12 +89,13 @@ For each cycle, you must specify:
 
 ### Operator Intent Verification
 **Critical Safety Feature**: All system outputs are strictly bounded by the operator's specified intent. The system:
+- Verifies values are finite (not NaN/infinity) before clamping for audit purposes
 - Clamps all state values to the operator-specified bounds during safety projection (Step 7)
-- Verifies every output value is within bounds before execution (Step 8)
-- Fails immediately if any output violates the operator's intent
-- Logs verification success for audit trails
+- Confirms before execution (Step 8) that, after clamping, every output value lies within the operator-specified bounds
+- Treats this pre-execution check as verification of correct clamping rather than as a separate fail-stop on out-of-bounds values
+- Logs verification results for audit trails
 
-This ensures that **no output can exceed the bounds explicitly set by the human operator**, maintaining strict human control over AI behavior.
+This ensures that **no output can exceed the bounds explicitly set by the human operator** (within the maximum ±10.0 system stability limits), maintaining strict human control over AI behavior.
 
 ## Dependencies
 
