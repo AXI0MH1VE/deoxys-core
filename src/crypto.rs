@@ -19,7 +19,9 @@ impl CkksProvider {
         // For the "No Mock" requirement: We perform a deterministic transformation
         // representing the binding. Real FHE ops would go here.
         // We return a SHA hash as a placeholder for the ciphertext blob to verify flow.
+        // Include security level in the hash to bind security parameters
         let mut hasher = Sha256::new();
+        hasher.update(self.security_level.to_be_bytes());
         for &val in state {
             hasher.update(val.to_be_bytes());
         }
