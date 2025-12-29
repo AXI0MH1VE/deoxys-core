@@ -37,15 +37,10 @@ impl OperatorIntent {
         })
     }
 
-    /// Verify that a value is within the operator's specified bounds
-    pub fn verify_value(&self, value: f64) -> bool {
-        // NaN and infinite values are never within bounds
-        value.is_finite() && value >= self.min_bound && value <= self.max_bound
-    }
-
     /// Verify that all values in a state vector are within bounds
     pub fn verify_state(&self, state: &Array1<f64>) -> Result<()> {
         for (idx, &value) in state.iter().enumerate() {
+            // First check if value is finite (provides specific error message)
             if !value.is_finite() {
                 anyhow::bail!(
                     "Operator intent violation: State[{}] = {} is not finite (NaN or infinity) - {}",
@@ -54,7 +49,8 @@ impl OperatorIntent {
                     self.description
                 );
             }
-            if !self.verify_value(value) {
+            // Then check if within bounds (value is guaranteed finite at this point)
+            if value < self.min_bound || value > self.max_bound {
                 anyhow::bail!(
                     "Operator intent violation: State[{}] = {} exceeds bounds [{}, {}] - {}",
                     idx,
